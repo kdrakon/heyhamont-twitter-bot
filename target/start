@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function die() {
+    echo "$*" 1>&2
+    exit 1
+}
+test -x './target/start' || die "'./target/start' not found, this script must be run from the project base directory"
+
+
+MAINCLASS=com.mrsjstudios.heyhamont.TwitterBotExecutor
+
+
+exec java $JAVA_OPTS -cp "./target/scala-2.9.2/classes:/home/kdrakon/.sbt/boot/scala-2.9.2/lib/scala-library.jar:/home/kdrakon/.ivy2/cache/org.twitter4j/twitter4j-core/jars/twitter4j-core-3.0.2.jar:/home/kdrakon/.ivy2/cache/org.twitter4j/twitter4j-stream/jars/twitter4j-stream-3.0.2.jar" "$MAINCLASS" "$@"
+
