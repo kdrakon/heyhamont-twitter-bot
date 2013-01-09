@@ -62,7 +62,8 @@ class StreamListener(twitterStatus : Twitter) extends StatusListener {
 
 	// the bot will simply perform a "retweet" of all found tweets
 	def onStatus(status : Status) {
-		twitterStatus.retweetStatus(status.getId())
+		// we only want those tweets that aren't directed between users
+		if (status.getInReplyToUserId == -1) twitterStatus.retweetStatus(status.getId())
 	}
 
 	def onDeletionNotice(statusDeletionNotice : StatusDeletionNotice) {}
