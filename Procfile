@@ -1,1 +1,1 @@
-web: target/start TwitterBotExecutor
+web: ./target/start TwitterBotExecutor
