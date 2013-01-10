@@ -3,4 +3,5 @@ consumerKey=xKsbzfgP7DtjeMpfz7Xyag
 consumerSecret=IQ0iIQyEoXChFIMBHTJiJrPatVGkoSYdfXkMCNgU
 accessToken=1060999766-zzexDRjsMuR3JSyAPHUo6isqs6yse92Ir07i5xU
 accessTokenSecret=mM5snqka0557yohD5pt1RGX9Gf2Ji6XXZgrbZPlQ
-filter=hey hamont;hamont
+filter=hamont
+tweetBuffer=10
