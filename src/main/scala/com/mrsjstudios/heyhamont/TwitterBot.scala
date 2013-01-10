@@ -60,9 +60,12 @@ class StreamListener(conf : Configuration, tweetBuffer : Int) extends StatusList
 
 		// send the sorted list (based on retweets) to the retweet bot thread.
 		if (tweetCollection.length >= tweetBuffer) {
+//			new Thread(new TwitterRetweetBot(conf,
+//				tweetCollection.sortWith((a : Status, b : Status) => a.getRetweetCount() > b.getRetweetCount()).toList))
+//				.start()
 			new Thread(new TwitterRetweetBot(conf,
-				tweetCollection.sortWith((a : Status, b : Status) => a.getRetweetCount() > b.getRetweetCount()).toList))
-				.start()
+				tweetCollection.toList))
+				.start()			
 			tweetCollection.clear // clear the buffer
 		}
 
