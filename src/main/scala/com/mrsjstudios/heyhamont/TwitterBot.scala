@@ -19,7 +19,7 @@ import twitter4j.conf.Configuration
 /**
   * The main TwitterBot implementation.
   */
-class TwitterStreamBot(configParameters : Map[ String, String ], retweetBot : Actor) {
+class TwitterStreamBot(configParameters : Map[ String, String ]) {
 
 	// create the configuration
 	val conf = (new ConfigurationBuilder)
@@ -34,7 +34,7 @@ class TwitterStreamBot(configParameters : Map[ String, String ], retweetBot : Ac
 	val twitterStream = new TwitterStreamFactory(conf).getInstance()
 
 	// add the listener
-	twitterStream.addListener(new StreamListener(configParameters("tweetBuffer").toInt, retweetBot))
+	twitterStream.addListener(new StreamListener(conf, configParameters("tweetBuffer").toInt))
 
 	// start listening to the stream (filter)
 	val filter = new FilterQuery
@@ -44,15 +44,9 @@ class TwitterStreamBot(configParameters : Map[ String, String ], retweetBot : Ac
 }
 
 /**
-  * A case class that wraps the collection of tweets to retweet.
-  * Used specifically for the TwitterRetweetBot actor.
-  */
-case class TweetsToRetweet(tweetColl : List[ Status ])
-
-/**
   * The Twitter stream handler
   */
-class StreamListener(tweetBuffer : Int, retweetBot : Actor) extends StatusListener {
+class StreamListener(conf : Configuration, tweetBuffer : Int) extends StatusListener {
 
 	// a mutable collection of tweets collected over time
 	var tweetCollection : MutableList[ Status ] = new MutableList
@@ -61,12 +55,15 @@ class StreamListener(tweetBuffer : Int, retweetBot : Actor) extends StatusListen
 		// we only want those tweets that aren't directed between users
 		if (status.getInReplyToUserId == -1 && status.getInReplyToStatusId == -1) {
 			tweetCollection += status
+			Console.println("Added status to collection: " + status.getId() + "[" + tweetCollection.length + "]")
 		}
 
-		// send the sorted list (based on retweets) to the retweet bot. clear it afterwards.
-		if (tweetCollection.length >= tweetBuffer) {			
-			retweetBot ! new TweetsToRetweet(tweetCollection.sortWith((a : Status, b : Status) => a.getRetweetCount() > b.getRetweetCount()).toList)
-			tweetCollection.clear
+		// send the sorted list (based on retweets) to the retweet bot thread.
+		if (tweetCollection.length >= tweetBuffer) {
+			new Thread(new TwitterRetweetBot(conf,
+				tweetCollection.sortWith((a : Status, b : Status) => a.getRetweetCount() > b.getRetweetCount()).toList))
+				.start()
+			tweetCollection.clear // clear the buffer
 		}
 
 	}
@@ -76,41 +73,30 @@ class StreamListener(tweetBuffer : Int, retweetBot : Actor) extends StatusListen
 	def onTrackLimitationNotice(numberOfLimitedStatuses : Int) {}
 	def onScrubGeo(userId : Long, upToStatusId : Long) {}
 	def onStallWarning(warning : StallWarning) {}
-	def onException(ex : Exception) { ex.printStackTrace() }
+	def onException(ex : Exception) { /*ex.printStackTrace()*/ }
 
 }
 
 /**
-  * An actor responsible with the retweeting task
+  * A thread responsible with the retweeting task
   */
-class TwitterRetweetBot(configParameters : Map[ String, String ]) extends Actor {
-
-	// create the configuration
-	val conf = (new ConfigurationBuilder)
-		.setUser(configParameters("user"))
-		.setOAuthConsumerKey(configParameters("consumerKey"))
-		.setOAuthConsumerSecret(configParameters("consumerSecret"))
-		.setOAuthAccessToken(configParameters("accessToken"))
-		.setOAuthAccessTokenSecret(configParameters("accessTokenSecret"))
-		.build
+class TwitterRetweetBot(conf : Configuration, tweetCollection : List[ Status ]) extends Runnable {
 
 	// create a handle to the twitter bots status
 	val botStatus = new TwitterFactory(conf).getInstance()
 
-	def act() {
-		while (true) {
-			receive {
-				case TweetsToRetweet(tweetColl) =>
-					tweetColl.foreach((s : Status) => botStatus.retweetStatus(s.getId()))
-			}
-		}
+	/*
+	 * Retweet each tweet with a 2s interval
+	 */
+	def run() {
+		Console.println("Retweeting collection now...")
+		tweetCollection.foreach((s : Status) => { botStatus.retweetStatus(s.getId()); Thread.sleep(2000) })
 	}
-
 }
 
 /**
- * Helper methods for bots
- */
+  * Helper methods for bots
+  */
 object ConfigLoader {
 
 	/**
@@ -132,8 +118,8 @@ object TwitterBotExecutor extends App {
 	// read in the bot parameters
 	val configParameters = ConfigLoader.readConfigFile("resources/twitterconfig")
 
-	// start the bots from main()
-	val retweetBot = new TwitterRetweetBot(configParameters)
-	val streamBot = new TwitterStreamBot(configParameters, retweetBot)
+	// start the bot from main()
+	//	val retweetBot = new TwitterRetweetBot(configParameters).start
+	val streamBot = new TwitterStreamBot(configParameters)
 
 }
