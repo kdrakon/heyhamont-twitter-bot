@@ -60,12 +60,12 @@ class StreamListener(conf : Configuration, tweetBuffer : Int) extends StatusList
 
 		// send the sorted list (based on retweets) to the retweet bot thread.
 		if (tweetCollection.length >= tweetBuffer) {
-//			new Thread(new TwitterRetweetBot(conf,
-//				tweetCollection.sortWith((a : Status, b : Status) => a.getRetweetCount() > b.getRetweetCount()).toList))
-//				.start()
+			//			new Thread(new TwitterRetweetBot(conf,
+			//				tweetCollection.sortWith((a : Status, b : Status) => a.getRetweetCount() > b.getRetweetCount()).toList))
+			//				.start()
 			new Thread(new TwitterRetweetBot(conf,
 				tweetCollection.toList))
-				.start()			
+				.start()
 			tweetCollection.clear // clear the buffer
 		}
 
@@ -89,11 +89,21 @@ class TwitterRetweetBot(conf : Configuration, tweetCollection : List[ Status ]) 
 	val botStatus = new TwitterFactory(conf).getInstance()
 
 	/*
-	 * Retweet each tweet with a 2s interval
+	 * Retweet each tweet with a 2s interval.
+	 * If a TwitterException is caught (or any other one), sleep for 5s
 	 */
 	def run() {
 		Console.println("Retweeting collection now...")
-		tweetCollection.foreach((s : Status) => { botStatus.retweetStatus(s.getId()); Thread.sleep(2000) })
+
+		for (s <- tweetCollection) {
+			try {
+				botStatus.retweetStatus(s.getId())
+				Thread.sleep(2000)
+			} catch {
+				case e : Exception => Console.println("Twitter exception caught. Going to sleep for 5s. [" + s.getId() + "]"); Thread.sleep(5000)
+			}
+
+		}
 	}
 }
 
