@@ -10,5 +10,5 @@ test -x './target/start' || die "'./target/start' not found, this script must be
 MAINCLASS=com.mrsjstudios.heyhamont.TwitterBotExecutor
 
 
-exec java $JAVA_OPTS -cp "./target/scala-2.9.2/classes:/home/kdrakon/.sbt/boot/scala-2.9.2/lib/scala-library.jar:/home/kdrakon/.ivy2/cache/org.twitter4j/twitter4j-core/jars/twitter4j-core-3.0.2.jar:/home/kdrakon/.ivy2/cache/org.twitter4j/twitter4j-stream/jars/twitter4j-stream-3.0.2.jar" "$MAINCLASS" "$@"
+exec java $JAVA_OPTS -cp "./target/scala-2.9.2/classes:/home/kdrakon/.sbt/boot/scala-2.9.2/lib/scala-library.jar:/home/kdrakon/.ivy2/cache/org.twitter4j/twitter4j-core/jars/twitter4j-core-3.0.2.jar:/home/kdrakon/.ivy2/cache/org.twitter4j/twitter4j-stream/jars/twitter4j-stream-3.0.2.jar:/home/kdrakon/.ivy2/cache/org.apache.commons/commons-lang3/jars/commons-lang3-3.1.jar" "$MAINCLASS" "$@"
 
